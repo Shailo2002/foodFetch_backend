@@ -23,7 +23,17 @@ const UserSchema = new mongoose.Schema({
     enum: ["user", "owner", "delivery_boy"],
     required: true,
   },
+  resetOtp: {
+    type: String,
+  },
+  isOtpVerified: {
+    type: Boolean,
+    default: false,
+  },
+  otpExpires: {
+    type: Date,
+  },
 });
 
-const User = mongoose.model("User", UserSchema)
-export default User
+const User = mongoose.model("User", UserSchema);
+export default User;
