@@ -3,7 +3,6 @@ import { sendOtpMail } from "../utils/mail.js";
 import genToken from "../utils/token.js";
 import bcrypt from "bcryptjs";
 
-
 export const signUp = async (req, res) => {
   try {
     console.log("signup endpoint");
@@ -78,7 +77,6 @@ export const signUp = async (req, res) => {
   }
 };
 
-
 export const signIn = async (req, res) => {
   try {
     console.log("signin endpoint");
@@ -137,9 +135,9 @@ export const signIn = async (req, res) => {
   }
 };
 
-
 export const signOut = async (req, res) => {
   try {
+    console.log("signout endpoint check");
     res.clearCookie("token");
     return res.status(200).json({
       success: true,
@@ -153,7 +151,6 @@ export const signOut = async (req, res) => {
     });
   }
 };
-
 
 export const sendOtp = async (req, res) => {
   try {
@@ -195,7 +192,6 @@ export const sendOtp = async (req, res) => {
     });
   }
 };
-
 
 export const verifyOtp = async (req, res) => {
   try {
@@ -241,7 +237,6 @@ export const verifyOtp = async (req, res) => {
     });
   }
 };
-
 
 export const resetPassword = async (req, res) => {
   try {
@@ -293,7 +288,6 @@ export const resetPassword = async (req, res) => {
     });
   }
 };
-
 
 export const googleAuth = async (req, res) => {
   try {
