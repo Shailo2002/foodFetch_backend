@@ -11,7 +11,7 @@ export const isAuth = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decoded) {
       return res.status(401).json({
@@ -20,7 +20,7 @@ export const isAuth = async (req, res, next) => {
       });
     }
 
-    req.userId = decoded.id || decoded.userId; 
+    req.userId = decoded.userId;
     next();
   } catch (error) {
     console.error("Token verification error:", error);

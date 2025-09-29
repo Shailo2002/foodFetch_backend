@@ -1,5 +1,5 @@
-import Shop from "../models/shop.model";
-import uploadOnCloudinary from "../utils/cloudinary";
+import Shop from "../models/shop.model.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 
 export const CreateOrEditShop = async (req, res) => {
   try {
@@ -18,7 +18,7 @@ export const CreateOrEditShop = async (req, res) => {
     }
 
     let shop = await Shop.findOne({ owner: req.userId });
-    
+
     if (!shop) {
       try {
         const shop = await Shop.create({
@@ -65,6 +65,42 @@ export const CreateOrEditShop = async (req, res) => {
     });
   } catch (error) {
     console.error("error while updating shop", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const getShop = async (req, res) => {
+  try {
+    console.log("get shop endpoint");
+
+   const userId = req.userId;
+   console.log("user ", userId)
+   
+
+    let shop = await Shop.findOne({owner:userId }).populate(
+      "owner",
+      "items"
+    );
+    
+
+    if (!shop) {
+      return res.status(201).json({
+        success: true,
+        message: "Shop not found",
+        data: shop,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Shop details get successfully",
+      data: shop,
+    });
+  } catch (error) {
+    console.error("error while geting shop", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error. Please try again later.",
