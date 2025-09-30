@@ -8,6 +8,7 @@ export const CreateOrEditShop = async (req, res) => {
     const { name, city, state, address } = req.body;
     let image;
     if (req.file) {
+      console.log(req.file)
       image = await uploadOnCloudinary(req.file.path);
     }
     if (!name || !city || !state || !address) {
