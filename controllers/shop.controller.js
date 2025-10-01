@@ -45,7 +45,7 @@ export const CreateOrEditShop = async (req, res) => {
       }
     }
 
-    result = await Shop.findByIdAndUpdate(
+   const result = await Shop.findByIdAndUpdate(
       shop._id,
       {
         name,
@@ -58,11 +58,12 @@ export const CreateOrEditShop = async (req, res) => {
       { new: true }
     );
 
-    await shop.populate("owner");
+    await shop.populate("owner items");
 
     return res.status(201).json({
       success: true,
       message: "Shop details updated successfully",
+      data: result
     });
   } catch (error) {
     console.error("error while updating shop", error);

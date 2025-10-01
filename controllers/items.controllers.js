@@ -4,6 +4,7 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 
 export const addItem = async (req, res) => {
   try {
+    console.log("add item check");
     const { name, category, price, foodtype } = req.body;
 
     let image;
@@ -28,10 +29,15 @@ export const addItem = async (req, res) => {
       price,
       foodtype,
     });
+
+    shop.items.push(item._id);
+
+    await shop.save();
+
     return res.status(200).json({
       success: true,
       message: "Item added successfully",
-      data: item,
+      data: shop,
     });
   } catch (error) {
     console.error("error while adding Item : ", error);
@@ -45,26 +51,30 @@ export const addItem = async (req, res) => {
 export const editItem = async (req, res) => {
   try {
     const { name, category, price, foodtype } = req.body;
-    const itemId = req.params.itemId
+    const itemId = req.params.itemId;
 
     let image;
     if (req.file) {
       image = await uploadOnCloudinary(req.file.path);
     }
 
-    const item = await Item.findByIdAndUpdate(itemId, {
-      name,
-      image,
-      category,
-      price,
-      foodtype,
-    },{new: true});
+    const item = await Item.findByIdAndUpdate(
+      itemId,
+      {
+        name,
+        image,
+        category,
+        price,
+        foodtype,
+      },
+      { new: true }
+    );
 
-    if(!item){
-        return res.status(404).json({
-          success: false,
-          message: "Item not found",
-        });
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
     }
 
     return res.status(200).json({
