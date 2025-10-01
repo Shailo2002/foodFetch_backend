@@ -8,7 +8,7 @@ export const CreateOrEditShop = async (req, res) => {
     const { name, city, state, address } = req.body;
     let image;
     if (req.file) {
-      console.log(req.file)
+      console.log(req.file);
       image = await uploadOnCloudinary(req.file.path);
     }
     if (!name || !city || !state || !address) {
@@ -45,7 +45,7 @@ export const CreateOrEditShop = async (req, res) => {
       }
     }
 
-   const result = await Shop.findByIdAndUpdate(
+    const result = await Shop.findByIdAndUpdate(
       shop._id,
       {
         name,
@@ -63,7 +63,7 @@ export const CreateOrEditShop = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Shop details updated successfully",
-      data: result
+      data: result,
     });
   } catch (error) {
     console.error("error while updating shop", error);
@@ -78,15 +78,13 @@ export const getShop = async (req, res) => {
   try {
     console.log("get shop endpoint");
 
-   const userId = req.userId;
-   console.log("user ", userId)
-   
+    const userId = req.userId;
+    console.log("user ", userId);
 
-    let shop = await Shop.findOne({owner:userId }).populate(
-      "owner",
-      "items"
-    );
-    
+    let shop = await Shop.findOne({ owner: userId }).populate({
+      path: "items",
+      options: { sort: { updatedAt: -1 } },
+    });
 
     if (!shop) {
       return res.status(201).json({

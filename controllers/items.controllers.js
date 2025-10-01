@@ -31,8 +31,11 @@ export const addItem = async (req, res) => {
     });
 
     shop.items.push(item._id);
-
     await shop.save();
+    await shop.populate({
+      path: "items",
+      options: { sort: { updatedAt: -1 } },
+    });
 
     return res.status(200).json({
       success: true,
@@ -50,6 +53,7 @@ export const addItem = async (req, res) => {
 
 export const editItem = async (req, res) => {
   try {
+    console.log("edit item checkpoint");
     const { name, category, price, foodtype } = req.body;
     const itemId = req.params.itemId;
 
@@ -76,11 +80,74 @@ export const editItem = async (req, res) => {
         message: "Item not found",
       });
     }
+    const shop = await Shop.findOne({ owner: req.userId }).populate({
+      path: "items",
+      options: { sort: { updatedAt: -1 } },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Item edited successfully",
+      data: shop,
+    });
+  } catch (error) {
+    console.error("error while adding Item : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const getItemById = async (req, res) => {
+  try {
+    const itemId = req?.params?.itemId;
+    console.log("get item checkpoint ");
+
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Item edited successfully",
       data: item,
+    });
+  } catch (error) {
+    console.error("error while adding Item : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const deleteItem = async (req, res) => {
+  try {
+    const itemId = req?.params?.itemId;
+
+    const item = await Item.findByIdAndDelete(itemId);
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    const shop = await Shop.findOne({ owner: req.userId }).populate({
+      path: "items",
+      options: { sort: { updatedAt: -1 } },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Item edited successfully",
+      data: shop,
     });
   } catch (error) {
     console.error("error while adding Item : ", error);
