@@ -29,18 +29,28 @@ const ItemShema = new mongoose.Schema(
         "Fast Food",
         "Others",
       ],
-      required:true
+      required: true,
     },
     price: {
-        type: Number,
-        min:0,
-        required: true
+      type: Number,
+      min: 0,
+      required: true,
     },
-    foodtype:{
-        type: String,
-        enum: ["veg", "non veg"],
-        required: true
-    }
+    foodtype: {
+      type: String,
+      enum: ["veg", "non veg"],
+      required: true,
+    },
+    rating: {
+      average: {
+        type: Number,
+        default: 0,
+      },
+      count: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   { timestamps: true }
 );
