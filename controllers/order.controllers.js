@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
+import User from "../models/user.model.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -46,7 +47,7 @@ export const placeOrder = async (req, res) => {
           0
         );
 
-        const shopOrderItem = items.map((i) => {
+        const shopOrderItems = items.map((i) => {
           return { item: i.id, price: i.price, quantity: i.quantity };
         });
 
@@ -54,7 +55,7 @@ export const placeOrder = async (req, res) => {
           shop: shopId,
           owner: shop.owner,
           subTotal,
-          shopOrderItem,
+          shopOrderItems,
         };
       })
     );
@@ -71,8 +72,8 @@ export const placeOrder = async (req, res) => {
       totalAmount,
       shopOrders: shopOrders,
     };
-    
-    const order = await Order.create(orderData)
+
+    const order = await Order.create(orderData);
 
     return res.status(201).json({
       success: true,
@@ -87,3 +88,59 @@ export const placeOrder = async (req, res) => {
     });
   }
 };
+
+export const getMyOrders = async (req, res) => {
+  try {
+    console.log("my order endpoint");
+    const userId = req.userId;
+
+    const user = await User.findById(userId);
+
+    if (user?.role == "user") {
+      const orders = await Order.find({ user: userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "name email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price");
+
+      if (!orders) {
+        return res.status(201).json({
+          success: true,
+          message: "no Order placed yet",
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: "all orders get successfully",
+        data: orders,
+      });
+    } else if (user?.role == "owner") {
+      const orders = await Order.find({ "shopOrders.owner": userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("user")
+        .populate("shopOrders.shopOrderItems.item", "name image price");
+
+      if (!orders) {
+        return res.status(201).json({
+          success: true,
+          message: "no Order placed yet",
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: "all orders get successfully",
+        data: orders,
+      });
+    }
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
