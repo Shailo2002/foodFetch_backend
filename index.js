@@ -7,6 +7,7 @@ import cors from "cors";
 import userRouter from "./routes/user.route.js";
 import shopRouter from "./routes/shop.route.js";
 import itemRouter from "./routes/items.route.js";
+import orderRouter from "./routes/order.route.js";
 dotenv.config();
 
 const app = express();
@@ -25,6 +26,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
+app.use("/api/order", orderRouter);
+
 
 app.listen(PORT, () => {
   connectDb();

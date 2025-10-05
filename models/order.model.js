@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const shopOrederItemSchema = new mongoose.model(
+const shopOrderItemSchema = new mongoose.Schema(
   {
     item: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,7 +13,7 @@ const shopOrederItemSchema = new mongoose.model(
   { timestamps: true }
 );
 
-const shopOrderSchem = new mongoose.model(
+const shopOrderSchema = new mongoose.Schema(
   {
     shop: {
       type: mongoose.Schema.Types.ObjectId,
@@ -26,12 +26,12 @@ const shopOrderSchem = new mongoose.model(
       required: true,
     },
     subTotal: Number,
-    shopOrderItems: [shopOrederItemSchema],
+    shopOrderItems: [shopOrderItemSchema],
   },
   { timestamps: true }
 );
 
-const orderSchema = new mongoose.model(
+const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -47,16 +47,16 @@ const orderSchema = new mongoose.model(
       text: String,
       latitude: Number,
       longitude: Number,
-      required: true,
     },
     totalAmount: {
       type: Number,
       required: true,
     },
-    shopOrder: [],
+    shopOrders: [shopOrderSchema],
   },
   { timestamps: true }
 );
 
-const Order = mongoose.Schema("order", orderSchema);
+const Order = mongoose.model("Order", orderSchema);
+
 export default Order;
