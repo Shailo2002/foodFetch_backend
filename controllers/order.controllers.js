@@ -73,12 +73,21 @@ export const placeOrder = async (req, res) => {
       shopOrders: shopOrders,
     };
 
-    const order = await Order.create(orderData);
+    const newOrder = await Order.create(orderData);
+
+    if (!newOrder) {
+    }
+
+    await newOrder.populate(
+      "shopOrders.shopOrderItems.item",
+      "name image price"
+    );
+    await newOrder.populate("shopOrders.shop", "name");
 
     return res.status(201).json({
       success: true,
       message: "Order placed successfully",
-      data: order,
+      data: newOrder,
     });
   } catch (error) {
     console.log("error : ", error);
@@ -146,6 +155,45 @@ export const getMyOrders = async (req, res) => {
     }
   } catch (error) {
     console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId, shopId } = req.params;
+    const { status } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const shopOrder = order.shopOrders.find((o) => o.shop.equals(shopId));
+    if (!shopOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop order not found",
+      });
+    }
+
+    shopOrder.status = status;
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Shop order status updated successfully",
+      data: shopOrder.status,
+    });
+  } catch (error) {
+    console.error("updateOrderStatus error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error. Please try again later.",

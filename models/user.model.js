@@ -11,7 +11,7 @@ const UserSchema = new mongoose.Schema({
     unique: true,
   },
   password: {
-    type: String
+    type: String,
   },
   mobile: {
     type: String,
@@ -32,7 +32,13 @@ const UserSchema = new mongoose.Schema({
   otpExpires: {
     type: Date,
   },
+  location: {
+    type: { type: String, enum: ["Point"], default: "Point" },
+    coordinates: { type: [Number], default: [0, 0] },
+  },
 });
+
+UserSchema.index({location:'2dsphere'})
 
 const User = mongoose.model("User", UserSchema);
 export default User;
