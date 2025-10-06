@@ -35,7 +35,11 @@ const shopOrderSchema = new mongoose.Schema(
     assignment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "DeliveryAssignment",
-      default: null
+      default: null,
+    },
+    assignedDeliveryBoy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   { timestamps: true }
