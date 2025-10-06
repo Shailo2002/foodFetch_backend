@@ -118,6 +118,7 @@ export const getMyOrders = async (req, res) => {
     } else if (user?.role == "owner") {
       const orders = await Order.find({ "shopOrders.owner": userId })
         .sort({ createdAt: -1 })
+        .populate("shopOrders", "shopOrders.owner === userId")
         .populate("shopOrders.shop", "name")
         .populate("user")
         .populate("shopOrders.shopOrderItems.item", "name image price");
@@ -128,11 +129,19 @@ export const getMyOrders = async (req, res) => {
           message: "no Order placed yet",
         });
       }
+      const filteredOrder = orders.map((order) => ({
+        _id: order._id,
+        paymentMethod: order?.paymentMethod,
+        deliveryAddress: order?.deliveryAddress,
+        user: order.user,
+        shopOrders: order.shopOrders.find((o) => o.owner._id == req.userId),
+        createdAt: order.createdAt,
+      }));
 
       return res.status(201).json({
         success: true,
         message: "all orders get successfully",
-        data: orders,
+        data: filteredOrder,
       });
     }
   } catch (error) {
@@ -143,4 +152,3 @@ export const getMyOrders = async (req, res) => {
     });
   }
 };
-
