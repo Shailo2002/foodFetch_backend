@@ -49,7 +49,11 @@ export const placeOrder = async (req, res) => {
         );
 
         const shopOrderItems = items.map((i) => {
-          return { item: i.id, price: i.price, quantity: i.quantity };
+          return {
+            item: i.id,
+            price: i.price,
+            quantity: i.quantity,
+          };
         });
 
         return {
@@ -186,7 +190,7 @@ export const updateOrderStatus = async (req, res) => {
     shopOrder.status = status;
 
     let deliveryBoysPayload = [];
-    if (status == "out_for_delivery" || !shopOrder.assignment) {
+    if (status == "out_for_delivery" && !shopOrder.assignment) {
       const { latitude, longitude } = order?.deliveryAddress;
 
       const nearDeliveryBoys = await User.find({
@@ -263,11 +267,54 @@ export const updateOrderStatus = async (req, res) => {
         shopOrder: updatedShopOrder,
         assignedDeliveryBoy: updatedShopOrder?.assignedDeliveryBoy,
         availableBoys: deliveryBoysPayload,
-        assignment: updatedShopOrder?.assignment._id,
+        assignment: updatedShopOrder?.assignment?._id,
       },
     });
   } catch (error) {
     console.error("updateOrderStatus error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const getAssignment = async (req, res) => {
+  try {
+    const deliveryBoyId = req.userId;
+
+    const assignment = await DeliveryAssignment.find({
+      brodCastedTo: deliveryBoyId,
+      status: "brodcasted",
+    })
+      .populate({
+        path: "order",
+        populate: {
+          path: "shopOrders.shopOrderItems.item",
+          select: "name image price", // only pick what you need
+        },
+      })
+      .populate("shop");
+
+    const formattedData = assignment.map((a) => ({
+      assignmentId: a?._id,
+      orderId: a?.order?._id,
+      shopName: a?.shop?.name,
+      deliveryAddress: a?.order?.deliveryAddress,
+      items:
+        a?.order?.shopOrders?.find((x) => x._id.equals(a.shopOrderId))
+          ?.shopOrderItems || [],
+      subtotal: a?.order?.shopOrders?.find((x) => x._id.equals(a.shopOrderId))
+        ?.subTotal,
+    }));
+
+    return res.status(201).json({
+      success: true,
+      message: "all availabel orders get successfully",
+      data: formattedData,
+    });
+  } catch (error) {
+    console.log("error : ", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error. Please try again later.",
