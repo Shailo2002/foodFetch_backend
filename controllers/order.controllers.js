@@ -135,7 +135,8 @@ export const getMyOrders = async (req, res) => {
         .populate("shopOrders", "shopOrders.owner === userId")
         .populate("shopOrders.shop", "name")
         .populate("user")
-        .populate("shopOrders.shopOrderItems.item", "name image price");
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
       if (!orders) {
         return res.status(201).json({
@@ -312,6 +313,129 @@ export const getAssignment = async (req, res) => {
       success: true,
       message: "all availabel orders get successfully",
       data: formattedData,
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const acceptOrder = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    const assignment = await DeliveryAssignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(400).json({
+        success: false,
+        message: "assignment not found.",
+      });
+    }
+
+    if (assignment.status == "assigned") {
+      return res.status(400).json({
+        success: false,
+        message: "order already assigned.",
+      });
+    }
+
+    const alreadyAssigned = await DeliveryAssignment.findOne({
+      assignedTo: req.userId,
+      status: { $nin: ["brodcasted", "completed"] },
+    });
+
+    if (alreadyAssigned) {
+      return res.status(400).json({
+        success: false,
+        message: "You are already assigned to another order",
+      });
+    }
+
+    (assignment.assignedTo = req.userId),
+      (assignment.status = "assigned"),
+      (assignment.acceptedAt = new Date());
+    await assignment.save();
+
+    const order = await Order.findById(assignment?.order);
+    if (!order) {
+      return res.status(400).json({
+        success: false,
+        message: "order not found.",
+      });
+    }
+    const shopOrder = order.shopOrders.find((x) =>
+      x._id.equals(assignment.shopOrderId)
+    );
+    shopOrder.assignedDeliveryBoy = req.userId;
+    await order.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Order Accepted",
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const getCurrentOrder = async (req, res) => {
+  try {
+    const assignment = await DeliveryAssignment.find({
+      assignedTo: req.userId,
+      status: "assigned",
+    })
+      .populate({
+        path: "order",
+        populate: {
+          path: "user",
+          select: "fullName mobile email location",
+        },
+      })
+      .populate("assignedTo", "fullName email mobile location")
+      .populate("shop", "name");
+    if (!assignment) {
+      return res.status(400).json({
+        success: false,
+        message: "No order Assigned",
+      });
+    }
+    if (!assignment.order) {
+      return res.status(400).json({
+        success: false,
+        message: "No order found",
+      });
+    }
+
+    const shopOrder = assignment.order.shopOrder.find((so) =>
+      String(so._id).equals(String(assignment.shopOrderId))
+    );
+
+    if (!shopOrder) {
+      return res.status(400).json({
+        success: false,
+        message: "shopOrder not found",
+      });
+    }
+
+    let deliveryBoyLocation = { lat: null, lon: null };
+    deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
+    deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+
+    let curstomerLocation = { lat: null, lon: null };
+    curstomerLocation.lat = assignment.order.deliveryAddress.latitude;
+    curstomerLocation.lon = assignment.order.deliveryAddress.longitude;
+
+    return res.status(201).json({
+      success: true,
+      message: "Order Accepted",
+      data: assignment,
     });
   } catch (error) {
     console.log("error : ", error);
