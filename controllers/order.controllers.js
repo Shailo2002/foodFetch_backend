@@ -459,3 +459,35 @@ export const getCurrentOrder = async (req, res) => {
     });
   }
 };
+
+export const getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findById(orderId)
+      .populate("user")
+      .populate({ path: "shopOrders.shop", model: "Shop" })
+      .populate({ path: "shopOrders.assignedDeliveryBoy", model: "User" })
+      .populate({ path: "shopOrders.shopOrderItems.item", model: "Item" })
+      .lean();
+
+    if (!order) {
+      return res.status(400).json({
+        success: false,
+        message: "Order Not Found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully get Order details",
+      data:order
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
