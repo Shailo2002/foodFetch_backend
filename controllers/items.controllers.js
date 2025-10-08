@@ -4,7 +4,6 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 
 export const addItem = async (req, res) => {
   try {
-    console.log("add item check");
     const { name, category, price, foodtype } = req.body;
 
     let image;
@@ -53,7 +52,6 @@ export const addItem = async (req, res) => {
 
 export const editItem = async (req, res) => {
   try {
-    console.log("edit item checkpoint");
     const { name, category, price, foodtype } = req.body;
     const itemId = req.params.itemId;
 
@@ -102,7 +100,6 @@ export const editItem = async (req, res) => {
 export const getItemById = async (req, res) => {
   try {
     const itemId = req?.params?.itemId;
-    console.log("get item checkpoint ");
 
     const item = await Item.findById(itemId);
 
@@ -161,7 +158,6 @@ export const deleteItem = async (req, res) => {
 export const getItemByCity = async (req, res) => {
   try {
     const city = req?.params?.city;
-    console.log("getItemCity endpoint ", city);
 
     if (!city || city === "null" || city === "undefined") {
       return res.status(400).json({

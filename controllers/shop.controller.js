@@ -3,12 +3,10 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 
 export const CreateOrEditShop = async (req, res) => {
   try {
-    console.log("shop endpoint");
 
     const { name, city, state, address } = req.body;
     let image;
     if (req.file) {
-      console.log(req.file);
       image = await uploadOnCloudinary(req.file.path);
     }
     if (!name || !city || !state || !address) {
@@ -76,10 +74,8 @@ export const CreateOrEditShop = async (req, res) => {
 
 export const getShop = async (req, res) => {
   try {
-    console.log("get shop endpoint");
 
     const userId = req.userId;
-    console.log("user ", userId);
 
     let shop = await Shop.findOne({ owner: userId }).populate({
       path: "items",
@@ -110,7 +106,6 @@ export const getShop = async (req, res) => {
 
 export const getShopByCity = async (req, res) => {
   try {
-    console.log("getshopbycity endpoint");
     const city = req?.params?.city;
 
     if (!city) {

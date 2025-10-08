@@ -9,7 +9,7 @@ orderRouter.get("/my-orders", isAuth, getMyOrders);
 orderRouter.get("/get-assignments", isAuth, getAssignment);
 orderRouter.post("/update-status/:orderId/:shopId", isAuth, updateOrderStatus);
 orderRouter.get("/accept-order/:assignmentId", isAuth, acceptOrder);
-orderRouter.get("/deliveryboy-order/", isAuth, getCurrentOrder);
+orderRouter.get("/get-current-order", isAuth, getCurrentOrder);
 
 
 

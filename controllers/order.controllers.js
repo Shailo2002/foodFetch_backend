@@ -5,8 +5,6 @@ import User from "../models/user.model.js";
 
 export const placeOrder = async (req, res) => {
   try {
-    console.log("placeOrder route");
-
     const { cartItems, paymentMethod, deliveryAddress } = req.body;
 
     if (!cartItems) {
@@ -105,7 +103,6 @@ export const placeOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
   try {
-    console.log("my order endpoint");
     const userId = req.userId;
 
     const user = await User.findById(userId);
@@ -387,7 +384,7 @@ export const acceptOrder = async (req, res) => {
 
 export const getCurrentOrder = async (req, res) => {
   try {
-    const assignment = await DeliveryAssignment.find({
+    const assignment = await DeliveryAssignment.findOne({
       assignedTo: req.userId,
       status: "assigned",
     })
@@ -399,7 +396,9 @@ export const getCurrentOrder = async (req, res) => {
         },
       })
       .populate("assignedTo", "fullName email mobile location")
-      .populate("shop", "name");
+      .populate("shop", "name address");
+
+    console.log("assignement : ", assignment);
     if (!assignment) {
       return res.status(400).json({
         success: false,
@@ -413,8 +412,8 @@ export const getCurrentOrder = async (req, res) => {
       });
     }
 
-    const shopOrder = assignment.order.shopOrder.find((so) =>
-      String(so._id).equals(String(assignment.shopOrderId))
+    const shopOrder = assignment.order.shopOrders.find((so) =>
+      so._id.equals(assignment.shopOrderId)
     );
 
     if (!shopOrder) {
@@ -425,17 +424,32 @@ export const getCurrentOrder = async (req, res) => {
     }
 
     let deliveryBoyLocation = { lat: null, lon: null };
-    deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
-    deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+    if (assignment.assignedTo.location.coordinates.length == 2) {
+      deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
+      deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+    }
 
     let curstomerLocation = { lat: null, lon: null };
-    curstomerLocation.lat = assignment.order.deliveryAddress.latitude;
-    curstomerLocation.lon = assignment.order.deliveryAddress.longitude;
+    if (assignment.order.deliveryAddress) {
+      curstomerLocation.lat = assignment.order.deliveryAddress.latitude;
+      curstomerLocation.lon = assignment.order.deliveryAddress.longitude;
+    }
 
     return res.status(201).json({
       success: true,
       message: "Order Accepted",
-      data: assignment,
+      data: {
+        _id: assignment.order._id,
+        user: assignment.order.user,
+        shopOrder,
+        shop: {
+          name: assignment.shop.name,
+          address: assignment.shop.address,
+        },
+        deliveryAddress: assignment.order.deliveryAddress.text,
+        deliveryBoyLocation,
+        curstomerLocation,
+      },
     });
   } catch (error) {
     console.log("error : ", error);

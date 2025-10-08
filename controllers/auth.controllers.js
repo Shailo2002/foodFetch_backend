@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs";
 
 export const signUp = async (req, res) => {
   try {
-    console.log("signup endpoint");
 
     const { fullName, password, email, mobile, role } = req.body;
 
@@ -82,7 +81,6 @@ export const signIn = async (req, res) => {
     
 
     const { email, password } = req.body;
-    console.log("signin endpoint" , req.body);
 
     if (!email || !password) {
       return res.status(400).json({
@@ -138,7 +136,6 @@ export const signIn = async (req, res) => {
 
 export const signOut = async (req, res) => {
   try {
-    console.log("signout endpoint check");
     res.clearCookie("token");
     return res.status(200).json({
       success: true,
@@ -155,7 +152,6 @@ export const signOut = async (req, res) => {
 
 export const sendOtp = async (req, res) => {
   try {
-    console.log("sendotp endpoint");
 
     const { email } = req.body;
     if (!email) {
@@ -196,7 +192,6 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    console.log("verify otp endpoint");
     const { email, otp } = req.body;
 
     if (!email || !otp) {
@@ -241,7 +236,6 @@ export const verifyOtp = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    console.log("reset password endpoint");
     const { newPassword, email } = req.body;
 
     if (!email || !newPassword) {
@@ -293,7 +287,6 @@ export const resetPassword = async (req, res) => {
 export const googleAuth = async (req, res) => {
   try {
     const { fullName, email, mobile, role } = req.body;
-    console.log("google auth endpoint");
 
     if (!email || !fullName) {
       return res.status(400).json({
