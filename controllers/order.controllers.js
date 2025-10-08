@@ -494,7 +494,6 @@ export const getOrderById = async (req, res) => {
 
 export const sendDeliveryOtp = async (req, res) => {
   try {
-
     const { shopOrderId, orderId } = req.body;
 
     const order = await Order.findById(orderId).populate("user");
@@ -534,7 +533,7 @@ export const sendDeliveryOtp = async (req, res) => {
 
 export const verifyDeliveryOtp = async (req, res) => {
   try {
-    console.log("otp verify check 1")
+    console.log("otp verify check 1");
     const { shopOrderId, orderId, otp } = req.body;
 
     const order = await Order.findById(orderId).populate("user");
@@ -576,7 +575,7 @@ export const verifyDeliveryOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Otp Verify successfully",
+      message: "Order delivered successfully",
     });
   } catch (error) {
     console.log("error : ", error);

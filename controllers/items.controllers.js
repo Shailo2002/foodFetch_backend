@@ -193,3 +193,36 @@ export const getItemByCity = async (req, res) => {
     });
   }
 };
+
+export const getItemsByShop = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+
+    if (!shopId) {
+      return res.status(400).json({
+        success: false,
+        message: "Shop is required",
+      });
+    }
+
+    const shop = await Shop.findById(shopId).populate("items");
+    if (!shop) {
+      return res.status(400).json({
+        success: false,
+        message: "Shop not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "shopItem get successfully",
+      data: { shop, items: shop.items },
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
