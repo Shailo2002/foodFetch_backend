@@ -2,6 +2,7 @@ import DeliveryAssignment from "../models/deliveryAssignment.model.js";
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
+import { sendDeliveryOtpMail } from "../utils/mail.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -398,7 +399,6 @@ export const getCurrentOrder = async (req, res) => {
       .populate("assignedTo", "fullName email mobile location")
       .populate("shop", "name address");
 
-    console.log("assignement : ", assignment);
     if (!assignment) {
       return res.status(400).json({
         success: false,
@@ -481,7 +481,102 @@ export const getOrderById = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Successfully get Order details",
-      data:order
+      data: order,
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const sendDeliveryOtp = async (req, res) => {
+  try {
+
+    const { shopOrderId, orderId } = req.body;
+
+    const order = await Order.findById(orderId).populate("user");
+
+    const shopOrder = order.shopOrders.id(shopOrderId);
+
+    if (!order || !shopOrder) {
+      return res.status(400).json({
+        success: false,
+        message: "enter valid order/shopOrderid",
+      });
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    shopOrder.deliveryOtp = otp;
+    shopOrder.otpExpires = Date.now() + 10 * 60 * 1000;
+    await sendDeliveryOtpMail({
+      to: order?.user?.email,
+      otp,
+      shopOrderId: shopOrder?._id?.toString().slice(-6),
+      userName: order?.user?.fullName,
+    });
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `OTP sent successfully to ${order?.user?.fullName}`,
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const verifyDeliveryOtp = async (req, res) => {
+  try {
+    console.log("otp verify check 1")
+    const { shopOrderId, orderId, otp } = req.body;
+
+    const order = await Order.findById(orderId).populate("user");
+
+    const shopOrder = order.shopOrders.id(shopOrderId);
+
+    if (!order || !shopOrder) {
+      return res.status(400).json({
+        success: false,
+        message: "enter valid order/shopOrderid",
+      });
+    }
+
+    if (
+      shopOrder.deliveryOtp !== otp ||
+      shopOrder.otpExpires < Date.now() ||
+      !shopOrder.otpExpires
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid/Expired otp",
+      });
+    }
+
+    const assignment = await DeliveryAssignment.findOne({ order: orderId });
+    if (!assignment) {
+      return res.status(400).json({
+        success: false,
+        message: "No delivery assignment found",
+      });
+    }
+
+    assignment.status = "completed";
+    shopOrder.status = "delivered";
+    shopOrder.deliveredAt = Date.now();
+    await assignment.save();
+    await order.save();
+    console.log("otp verify check 2");
+
+    return res.status(200).json({
+      success: true,
+      message: "Otp Verify successfully",
     });
   } catch (error) {
     console.log("error : ", error);
