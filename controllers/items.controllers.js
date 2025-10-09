@@ -226,3 +226,45 @@ export const getItemsByShop = async (req, res) => {
     });
   }
 };
+
+export const serchItems = async (req, res) => {
+  try {
+    const { query, city } = req?.query;
+
+    if (!city || !query) {
+      return 
+    }
+
+    const shops = await Shop.find({
+      city: { $regex: new RegExp(`^${city}$`, "i") },
+    }).populate("items");
+
+    if (!shops || shops.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No shops found for this city",
+      });
+    }
+
+    const shopIds = shops.map((shop) => shop._id);
+    const items = await Item.find({
+      shop: { $in: shopIds },
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { category: { $regex: query, $options: "i" } },
+      ],
+    }).populate("shop", "name image");
+
+    return res.status(200).json({
+      success: true,
+      message: "Items found from your city",
+      data: items,
+    });
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
