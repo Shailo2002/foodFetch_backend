@@ -177,30 +177,27 @@ export const verifyPayment = async (req, res) => {
     order.razorpayPaymentId = razorpay_payment_id;
     await order.save();
 
-      await order.populate(
-        "shopOrders.shopOrderItems.item",
-        "name image price"
-      );
-      await order.populate("shopOrders.shop", "name");
-      await order.populate("shopOrders.owner", "name socketId");
-      await order.populate("user", "name email mobile");
-      const io = req.app.get("io");
-      if (io) {
-        order?.shopOrders?.forEach((shopOrder) => {
-          const socketId = shopOrder.owner.socketId;
-          if (socketId) {
-            io.to(socketId).emit("newOrder", {
-              _id: order._id,
-              paymentMethod: order?.paymentMethod,
-              deliveryAddress: order?.deliveryAddress,
-              user: order.user,
-              shopOrders: shopOrder,
-              createdAt: order.createdAt,
-              payment: order.payment,
-            });
-          }
-        });
-      }
+    await order.populate("shopOrders.shopOrderItems.item", "name image price");
+    await order.populate("shopOrders.shop", "name");
+    await order.populate("shopOrders.owner", "name socketId");
+    await order.populate("user", "name email mobile");
+    const io = req.app.get("io");
+    if (io) {
+      order?.shopOrders?.forEach((shopOrder) => {
+        const socketId = shopOrder.owner.socketId;
+        if (socketId) {
+          io.to(socketId).emit("newOrder", {
+            _id: order._id,
+            paymentMethod: order?.paymentMethod,
+            deliveryAddress: order?.deliveryAddress,
+            user: order.user,
+            shopOrders: shopOrder,
+            createdAt: order.createdAt,
+            payment: order.payment,
+          });
+        }
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -332,6 +329,14 @@ export const updateOrderStatus = async (req, res) => {
       );
       const candidates = availableBoys.map((x) => x._id);
 
+      const deliveryAssignment = await DeliveryAssignment.create({
+        order: order._id,
+        shop: shopOrder.shop,
+        shopOrderId: shopOrder._id,
+        brodCastedTo: candidates,
+        status: "brodcasted",
+      });
+
       if (candidates.length <= 0) {
         await order.save();
 
@@ -341,13 +346,6 @@ export const updateOrderStatus = async (req, res) => {
           data: shopOrder.status,
         });
       }
-      const deliveryAssignment = await DeliveryAssignment.create({
-        order: order._id,
-        shop: shopOrder.shop,
-        shopOrderId: shopOrder._id,
-        brodCastedTo: candidates,
-        status: "brodcasted",
-      });
 
       shopOrder.assignedDeliveryBoy = deliveryAssignment.assignedTo;
       shopOrder.assignment = deliveryAssignment._id;
@@ -366,9 +364,26 @@ export const updateOrderStatus = async (req, res) => {
       "shopOrders.assignedDeliveryBoy",
       "fullName email mobile"
     );
+    await order.populate("user");
 
     await shopOrder.save();
     await order.save();
+
+    console.log("user in status ", order?.user)
+
+    const io = req.app.get("io");
+    if (io) {
+      console.log("inside socket")
+      const socketId = order?.user?.socketId;
+      if (socketId) {
+        io.to(socketId).emit("orderStatus", {
+          userId: order?.user._id,
+          shopId,
+          orderId,
+          status,
+        });
+      }
+    }
 
     const updatedShopOrder = order.shopOrders.find((o) =>
       o.shop.equals(shopId)
