@@ -124,7 +124,7 @@ export const placeOrder = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       newOrder?.shopOrders?.forEach((shopOrder) => {
-        const socketId = shopOrder.owner.socketId;
+        const socketId = shopOrder?.owner?.socketId;
         if (socketId) {
           io.to(socketId).emit("newOrder", {
             _id: newOrder._id,
@@ -357,6 +357,48 @@ export const updateOrderStatus = async (req, res) => {
         latitude: b.location.coordinates?.[1],
         mobile: b.mobile,
       }));
+
+      console.log("candidates : ", candidates);
+
+      await deliveryAssignment.populate("brodCastedTo");
+      await deliveryAssignment.populate({
+        path: "order",
+        populate: {
+          path: "shopOrders.shopOrderItems.item",
+          select: "name image price",
+        },
+      });
+      await deliveryAssignment.populate("shop");
+
+      const result = deliveryAssignment;
+
+      console.log("newData ", result);
+
+      const activeUserSocketId = result?.brodCastedTo
+        ?.filter((x) => x?.isOnline && x?.socketId)
+        ?.map((x) => x.socketId);
+
+      console.log("Active delivery boys:", activeUserSocketId);
+
+      const formattedData = {
+        assignmentId: result?._id,
+        orderId: result?.order?._id,
+        shopName: result?.shop?.name,
+        deliveryAddress: result?.order?.deliveryAddress,
+        items:
+          result?.order?.shopOrders?.find((x) =>
+            x._id.equals(result?.shopOrderId)
+          )?.shopOrderItems || [],
+        subtotal: result?.order?.shopOrders?.find((x) =>
+          x._id.equals(result?.shopOrderId)
+        )?.subTotal,
+      };
+      console.log("formattedData ", formattedData);
+
+      const io = req.app.get("io");
+      if (io) {
+        io.to(activeUserSocketId).emit("newAssignment", formattedData);
+      }
     }
 
     await order.populate("shopOrders.shop", "name");
@@ -369,11 +411,8 @@ export const updateOrderStatus = async (req, res) => {
     await shopOrder.save();
     await order.save();
 
-    console.log("user in status ", order?.user)
-
     const io = req.app.get("io");
     if (io) {
-      console.log("inside socket")
       const socketId = order?.user?.socketId;
       if (socketId) {
         io.to(socketId).emit("orderStatus", {
