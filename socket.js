@@ -15,6 +15,19 @@ export const socketHandler = async (io) => {
       }
     });
 
+    socket.on("updateLocation", async ({ latitude, longitude, userId }) => {
+      try {
+        await User.findByIdAndUpdate(userId, {
+          location: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+          isOnline:true,
+          socketId:socket.id
+        });
+      } catch (error) {}
+    });
+
     socket.on("disconnect", async () => {
       try {
         await User.findOneAndUpdate(
