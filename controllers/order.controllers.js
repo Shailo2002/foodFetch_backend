@@ -754,3 +754,58 @@ export const verifyDeliveryOtp = async (req, res) => {
     });
   }
 };
+
+export const getTodayDelivery = async (req, res) => {
+  try {
+    const deliveryBoyId = req.userId;
+    const startsofDay = new Date();
+    startsofDay.setHours(0, 0, 0, 0);
+
+    const orders = await Order.find({
+      "shopOrders.assignedDeliveryBoy": deliveryBoyId,
+      "shopOrders.status": "delivered",
+      "shopOrders.deliveredAt": { $gte: startsofDay },
+    }).lean();
+
+    let todayDeliveries = [];
+
+    orders.forEach((order) => {
+      order.shopOrders.forEach((shopOrder) => {
+        if (
+          shopOrder.assignedDeliveryBoy == deliveryBoyId &&
+          shopOrder.status == "delivered" &&
+          shopOrder.deliveredAt &&
+          shopOrder.deliveredAt >= startsofDay
+        ) {
+          todayDeliveries.push(shopOrder);
+        }
+      });
+    });
+
+    let stats = {};
+    todayDeliveries.forEach((shopOrder) => {
+      const hour = new Date(shopOrder?.deliveredAt).getHours();
+      stats[hour] = (stats[hour] || 0) + 1;
+    });
+
+    let formattedData = Object.keys(stats).map(hour => ({
+      hour:parseInt(hour),
+      count: stats[hour]
+    }))
+
+    formattedData.sort((a,b) => a.hour-b.hour)
+
+    return res.status(201).json({
+      success:true, 
+      message:"deliveryData gate successfull", 
+      data:formattedData
+    })
+
+  } catch (error) {
+    console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};

@@ -4,7 +4,6 @@ export const socketHandler = async (io) => {
   io.on("connection", (socket) => {
     socket.on("identity", async ({ userId }) => {
       try {
-        console.log("userID :", userId);
         const user = await User.findByIdAndUpdate(
           userId,
           { socketId: socket.id, isOnline: true },
@@ -24,12 +23,6 @@ export const socketHandler = async (io) => {
           },
           isOnline: true,
           socketId: socket.id,
-        });
-
-        console.log("updateBoyLocation : ", {
-          deliveryBoyId: userId,
-          latitude,
-          longitude,
         });
 
         if (user) {

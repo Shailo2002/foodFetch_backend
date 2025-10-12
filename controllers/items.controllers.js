@@ -232,7 +232,7 @@ export const serchItems = async (req, res) => {
     const { query, city } = req?.query;
 
     if (!city || !query) {
-      return 
+      return;
     }
 
     const shops = await Shop.find({
@@ -262,6 +262,50 @@ export const serchItems = async (req, res) => {
     });
   } catch (error) {
     console.log("error : ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const rating = async (req, res) => {
+  try {
+    const { itemId, rating } = req.body;
+    console.log(" routeree 1");
+
+    if (!itemId || !rating) {
+      res.status(201).json({
+        success: false,
+        message: "itemId and rating required",
+      });
+    }
+
+    if (rating < 0 || rating > 5) {
+      res.status(201).json({
+        success: false,
+        message: "rating must be between 0 to 5",
+      });
+    }
+
+    const item = await Item.findById(itemId);
+    console.log(" routeree 2", item);
+
+    const newCount = item?.rating?.count + 1;
+    const newAverage = (item?.rating?.average * item?.rating?.count + rating) / newCount;
+
+    item.rating.average = newAverage;
+    item.rating.count = newCount;
+    await item.save();
+
+    console.log(" routeree 3");
+
+    return res.status(201).json({
+      success: true,
+      message: "rating updated successfully",
+      data: { rating: item?.rating },
+    });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Internal server error. Please try again later.",
