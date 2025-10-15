@@ -272,7 +272,6 @@ export const serchItems = async (req, res) => {
 export const rating = async (req, res) => {
   try {
     const { itemId, rating } = req.body;
-    console.log(" routeree 1");
 
     if (!itemId || !rating) {
       res.status(201).json({
@@ -289,7 +288,6 @@ export const rating = async (req, res) => {
     }
 
     const item = await Item.findById(itemId);
-    console.log(" routeree 2", item);
 
     const newCount = item?.rating?.count + 1;
     const newAverage = (item?.rating?.average * item?.rating?.count + rating) / newCount;
@@ -298,7 +296,6 @@ export const rating = async (req, res) => {
     item.rating.count = newCount;
     await item.save();
 
-    console.log(" routeree 3");
 
     return res.status(201).json({
       success: true,

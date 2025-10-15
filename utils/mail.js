@@ -19,12 +19,15 @@ export const sendOtpMail = async ({ to, otp }) => {
       to,
       subject: "Your OTP to Reset Password",
       html: `
-    <p>Hello!</p>
-    <p>We received a request to reset your password.</p>
+    <p>Dear User</p>
+    <p>We received a request to reset your password for FoodFetch account.</p>
+    <p>Please use the following OTP to reset your password.</p
     <p>Your OTP is:
     <h2 style="color:#007bff;">${otp}</h2></p>
     <p>This OTP will expire in 10 minutes.</p>
     <p>If you didn’t request this, just ignore this email.</p>
+    
+    <p>FoodFetch Team</p>
   `,
     });
   } catch (err) {

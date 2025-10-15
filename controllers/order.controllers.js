@@ -315,16 +315,17 @@ export const updateOrderStatus = async (req, res) => {
             $maxDistance: 5000,
           },
         },
+        isOnline: true,
       });
 
-      const nearbyIds = nearDeliveryBoys.map((boy) => boy._id);
+      const nearbyIds = nearDeliveryBoys?.map((boy) => boy._id);
       const busyIds = await DeliveryAssignment.find({
         assignedTo: { $in: nearbyIds },
         status: { $nin: ["brodcasted", "completed"] },
       }).distinct("assignedTo");
 
       const busyIdsSet = new Set(busyIds?.map((id) => String(id)));
-      const availableBoys = nearDeliveryBoys.filter(
+      const availableBoys = nearDeliveryBoys?.filter(
         (b) => !busyIdsSet.has(String(b._id))
       );
       const candidates = availableBoys.map((x) => x._id);
@@ -358,7 +359,6 @@ export const updateOrderStatus = async (req, res) => {
         mobile: b.mobile,
       }));
 
-      console.log("candidates : ", candidates);
 
       await deliveryAssignment.populate("brodCastedTo");
       await deliveryAssignment.populate({
@@ -372,13 +372,11 @@ export const updateOrderStatus = async (req, res) => {
 
       const result = deliveryAssignment;
 
-      console.log("newData ", result);
 
       const activeUserSocketId = result?.brodCastedTo
         ?.filter((x) => x?.isOnline && x?.socketId)
         ?.map((x) => x.socketId);
 
-      console.log("Active delivery boys:", activeUserSocketId);
 
       const formattedData = {
         assignmentId: result?._id,
@@ -393,7 +391,6 @@ export const updateOrderStatus = async (req, res) => {
           x._id.equals(result?.shopOrderId)
         )?.subTotal,
       };
-      console.log("formattedData ", formattedData);
 
       const io = req.app.get("io");
       if (io) {
@@ -788,19 +785,18 @@ export const getTodayDelivery = async (req, res) => {
       stats[hour] = (stats[hour] || 0) + 1;
     });
 
-    let formattedData = Object.keys(stats).map(hour => ({
-      hour:parseInt(hour),
-      count: stats[hour]
-    }))
+    let formattedData = Object.keys(stats).map((hour) => ({
+      hour: parseInt(hour),
+      count: stats[hour],
+    }));
 
-    formattedData.sort((a,b) => a.hour-b.hour)
+    formattedData.sort((a, b) => a.hour - b.hour);
 
     return res.status(201).json({
-      success:true, 
-      message:"deliveryData gate successfull", 
-      data:formattedData
-    })
-
+      success: true,
+      message: "deliveryData gate successfull",
+      data: formattedData,
+    });
   } catch (error) {
     console.log("error : ", error);
     return res.status(500).json({
