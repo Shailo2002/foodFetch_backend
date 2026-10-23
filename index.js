@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import connectDb from "./config/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -51,6 +52,18 @@ const PORT = process.env.PORT || 8000;
 app.use(cookieParser());
 app.use(express.json());
 
+app.get("/health", (_req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({ status: ready ? "ok" : "database unavailable" });
+});
+
+app.use("/api", (_req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ success: false, message: "Service temporarily unavailable. Please try again shortly." });
+  }
+  next();
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
@@ -59,8 +72,17 @@ app.use("/api/order", orderRouter);
 
 socketHandler(io);
 
-server.listen(PORT, () => {
-  connectDb();
+async function start() {
+  try {
+    await connectDb();
+  } catch (error) {
+    // Do not log connection strings or credentials.
+    console.error("Database startup failed:", error.name, error.code || "connection unavailable");
+    process.exit(1);
+  }
+  server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log("Allowed origins:", allowedOrigins);
-});
+  });
+}
+start();
